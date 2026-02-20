@@ -204,20 +204,9 @@ export function ControlBar({
           {hasSelection ? "取消全选" : "全选/取消"}
         </button>
 
-        {/* 扫描进度提示 */}
-        {scanning && (
-          <span
-            className="flex items-center gap-1.5 text-xs ml-1"
-            style={{ color: "var(--text-secondary)" }}
-          >
-            <LoadingSpinner />
-            扫描中...
-          </span>
-        )}
-
-        {/* 右侧：包含子文件夹选项 */}
+        {/* 包含子文件夹选项 */}
         <label
-          className="flex items-center gap-2 cursor-pointer select-none ml-auto"
+          className="flex items-center gap-2 cursor-pointer select-none ml-2"
           style={{ color: "var(--text-secondary)" }}
         >
           <input
@@ -228,6 +217,17 @@ export function ControlBar({
           />
           <span className="text-xs">包含子文件夹</span>
         </label>
+
+        {/* 扫描进度提示 */}
+        {scanning && (
+          <span
+            className="flex items-center gap-1.5 text-xs ml-1"
+            style={{ color: "var(--text-secondary)" }}
+          >
+            <LoadingSpinner />
+            扫描中...
+          </span>
+        )}
       </div>
     </div>
   );
