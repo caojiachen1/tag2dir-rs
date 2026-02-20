@@ -93,7 +93,7 @@ function NavBtn({
         border: "1px solid var(--stroke-control-strong)",
         color: "var(--text-secondary)",
         fontSize: 11,
-        cursor: "pointer",
+        cursor: "default",
         transition: "background 0.1s",
       }}
       onMouseEnter={(e) => (e.currentTarget.style.background = "var(--bg-control-hover)")}

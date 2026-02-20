@@ -129,7 +129,7 @@ html, body, #root {
   font-size: 12px;
   font-family: inherit;
   font-weight: 400;
-  cursor: pointer;
+  cursor: default;
   transition: background 0.1s, border-color 0.1s;
   white-space: nowrap;
   user-select: none;
@@ -145,7 +145,7 @@ html, body, #root {
   background: var(--bg-control-disabled);
   border-color: var(--stroke-control);
   color: var(--text-disabled);
-  cursor: not-allowed;
+  cursor: default;
 }
 
 /* ===== Fluent 强调按钮 ===== */
@@ -227,7 +227,7 @@ html, body, #root {
   accent-color: var(--accent);
   width: 16px;
   height: 16px;
-  cursor: pointer;
+  cursor: default;
 }
 
 /* ===== 进度条动画 ===== */
@@ -257,7 +257,7 @@ html, body, #root {
   font-size: 11px;
   font-family: inherit;
   outline: none;
-  cursor: pointer;
+  cursor: default;
   transition: background 0.1s;
 }
 .fluent-select:hover {
@@ -269,7 +269,7 @@ html, body, #root {
 }
 .fluent-select:disabled {
   color: var(--text-disabled);
-  cursor: not-allowed;
+  cursor: default;
   opacity: 0.6;
 }
 .fluent-select option {

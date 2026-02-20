@@ -23,7 +23,7 @@ export const ImageCard = memo(function ImageCard({
 
   return (
     <div
-      className={`fluent-card relative overflow-hidden flex flex-col cursor-pointer h-full ${selected ? "selected" : ""}`}
+      className={`fluent-card relative overflow-hidden flex flex-col h-full ${selected ? "selected" : ""}`}
       style={{
         opacity: isMoved ? 0.45 : 1,
         transition: "opacity 0.2s, background 0.15s, border-color 0.15s, box-shadow 0.15s",

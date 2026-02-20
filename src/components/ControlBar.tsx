@@ -206,7 +206,7 @@ export function ControlBar({
 
         {/* 包含子文件夹选项 */}
         <label
-          className="flex items-center gap-2 cursor-pointer select-none ml-2"
+          className="flex items-center gap-2 select-none ml-2"
           style={{ color: "var(--text-secondary)" }}
         >
           <input
