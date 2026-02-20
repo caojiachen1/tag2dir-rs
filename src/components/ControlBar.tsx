@@ -9,6 +9,7 @@ interface ControlBarProps {
   moving: boolean;
   hasUndo: boolean;
   hasSelection: boolean;
+  previewOpen: boolean;
   onSourceDirChange: (dir: string) => void;
   onTargetDirChange: (dir: string) => void;
   onIncludeSubdirsChange: (val: boolean) => void;
@@ -17,6 +18,7 @@ interface ControlBarProps {
   onScan: () => void;
   onCancelScan: () => void;
   onToggleSelectAll: () => void;
+  onTogglePreview: () => void;
   onMove: () => void;
   onUndo: () => void;
 }
@@ -29,6 +31,7 @@ export function ControlBar({
   moving,
   hasUndo,
   hasSelection,
+  previewOpen,
   onSourceDirChange,
   onTargetDirChange,
   onIncludeSubdirsChange,
@@ -37,6 +40,7 @@ export function ControlBar({
   onScan,
   onCancelScan,
   onToggleSelectAll,
+  onTogglePreview,
   onMove,
   onUndo,
 }: ControlBarProps) {
@@ -138,12 +142,12 @@ export function ControlBar({
           </button>
         )}
 
-        {/* 预览移动（功能占位，当前等同于执行移动的预检） */}
+        {/* 预览移动 */}
         <button
-          disabled={busy || scanning || !hasSelection || !targetDir}
+          onClick={onTogglePreview}
+          disabled={busy || scanning || !hasSelection}
           className="fluent-btn"
-          title="预览移动目标（功能待实现）"
-          style={{ opacity: 0.7 }}
+          title={previewOpen ? "收起预览面板" : "打开预览面板"}
         >
           <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />

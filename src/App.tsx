@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useCallback, useRef, useEffect, useMemo } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { open } from "@tauri-apps/plugin-dialog";
@@ -13,6 +13,7 @@ import type {
 } from "./types";
 import { ControlBar } from "./components/ControlBar";
 import { ImageGrid } from "./components/ImageGrid";
+import { MovePreviewPanel } from "./components/MovePreviewPanel";
 import { StatusBar } from "./components/StatusBar";
 
 function App() {
@@ -33,6 +34,7 @@ function App() {
   );
   const [hasUndo, setHasUndo] = useState(false);
   const [statusMessage, setStatusMessage] = useState("就绪");
+  const [previewOpen, setPreviewOpen] = useState(false);
 
   // 虚拟列表引用
   const gridRef = useRef<{
@@ -247,6 +249,48 @@ function App() {
     img.persons.forEach((p) => personBuckets.add(p));
   });
 
+  const movePreview = useMemo(() => {
+    const selectedImages = images.filter((img) => selectedIds.has(img.id));
+    const groups = new Map<
+      string,
+      { id: string; filename: string; thumbnail: string }[]
+    >();
+    let unassignedCount = 0;
+
+    selectedImages.forEach((img) => {
+      if (!img.selected_person) {
+        unassignedCount += 1;
+        return;
+      }
+      const items = groups.get(img.selected_person) ?? [];
+      items.push({
+        id: img.id,
+        filename: img.filename,
+        thumbnail: img.thumbnail,
+      });
+      groups.set(img.selected_person, items);
+    });
+
+    const groupList = Array.from(groups.entries())
+      .map(([person, items]) => ({
+        person,
+        count: items.length,
+        items,
+      }))
+      .sort((a, b) => b.count - a.count || a.person.localeCompare(b.person, "zh-CN"));
+
+    return {
+      selectedCount: selectedImages.length,
+      validCount: selectedImages.length - unassignedCount,
+      unassignedCount,
+      groups: groupList,
+    };
+  }, [images, selectedIds]);
+
+  const togglePreviewPanel = useCallback(() => {
+    setPreviewOpen((prev) => !prev);
+  }, []);
+
   return (
     <div className="flex flex-col h-screen" style={{ background: "var(--bg-base)" }}>
       {/* 顶部控制栏 */}
@@ -258,6 +302,7 @@ function App() {
         moving={moving}
         hasUndo={hasUndo}
         hasSelection={selectedIds.size > 0}
+        previewOpen={previewOpen}
         onSourceDirChange={setSourceDir}
         onTargetDirChange={setTargetDir}
         onIncludeSubdirsChange={setIncludeSubdirs}
@@ -266,6 +311,7 @@ function App() {
         onScan={startScan}
         onCancelScan={cancelScan}
         onToggleSelectAll={toggleSelectAll}
+        onTogglePreview={togglePreviewPanel}
         onMove={executeMove}
         onUndo={undoLastMove}
       />
@@ -320,6 +366,17 @@ function App() {
             </div>
           </div>
         </div>
+      )}
+
+      {previewOpen && (
+        <MovePreviewPanel
+          targetDir={targetDir}
+          selectedCount={movePreview.selectedCount}
+          validCount={movePreview.validCount}
+          unassignedCount={movePreview.unassignedCount}
+          groups={movePreview.groups}
+          onClose={togglePreviewPanel}
+        />
       )}
 
       <StatusBar
