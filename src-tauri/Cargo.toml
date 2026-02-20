@@ -44,3 +44,4 @@ uuid = { version = "1", features = ["v4"] }
 chrono = { version = "0.4", features = ["serde"] }
 base64 = "0.22"
 parking_lot = "0.12"
+dashmap = "6.1"

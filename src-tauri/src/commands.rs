@@ -56,49 +56,47 @@ pub async fn scan_images(
 
     // 在后台线程中执行扫描
     let app_handle = app.clone();
-    let result = tokio::task::spawn_blocking(move || {
+    let result = tokio::task::spawn_blocking(move || -> Result<ScanStats, String> {
+        use rayon::prelude::*;
+
         // 1. 扫描图片文件列表
         let files = scanner::scan_image_files(&source_dir, include_subdirs);
         let total = files.len();
 
-        log::info!("找到 {} 个图片文件，开始处理元数据...", total);
+        log::info!("找到 {} 个图片文件，开始并行处理元数据...", total);
 
-        // 用于统计人物（桶算法）
-        let mut person_buckets: std::collections::HashSet<String> = std::collections::HashSet::new();
-        let mut scanned_count = 0usize;
+        // 用于统计人物（并行安全容器）
+        let person_buckets = dashmap::DashSet::new();
+        let scanned_count = std::sync::atomic::AtomicUsize::new(0);
 
-        // 2. 逐个处理图片（流式推送到前端），每批并行处理后逐个推送
-        let batch_size = 4;
-        'outer: for batch in files.chunks(batch_size) {
-            // 检查取消标志 —— 每批开始前检查一次
-            if cancel_flag.load(Ordering::Relaxed) {
-                log::info!("扫描被用户取消，已处理 {} 张", scanned_count);
-                let event = ScanProgressEvent {
-                    scanned: scanned_count,
-                    image: None,
-                    done: true,
-                    cancelled: true,
-                    error: None,
-                };
-                let _ = app_handle.emit("scan-progress", &event);
-                break 'outer;
-            }
+        // 限制并行线程数，避免 100% 占用导致电脑卡顿
+        // 设置为逻辑核心数的一半，但至少 1 个线程，最多 6 个线程
+        let num_cpus = std::thread::available_parallelism().map(|n| n.get()).unwrap_or(4);
+        let worker_threads = (num_cpus / 2).clamp(1, 6);
+        
+        let pool = rayon::ThreadPoolBuilder::new()
+            .num_threads(worker_threads)
+            .build()
+            .map_err(|e| format!("创建线程池失败: {}", e))?;
 
-            let results: Vec<Result<ImageInfo, String>> = batch
-                .iter()
-                .map(|path| scanner::process_single_image(path))
-                .collect();
+        pool.install(|| {
+            files.into_par_iter().for_each(|path| {
+                // 检查取消标志
+                if cancel_flag.load(Ordering::Relaxed) {
+                    return;
+                }
 
-            for result in results {
-                scanned_count += 1;
+                let result = scanner::process_single_image(&path);
+                let current_count = scanned_count.fetch_add(1, Ordering::SeqCst) + 1;
+
                 match result {
                     Ok(info) => {
                         for person in &info.persons {
                             person_buckets.insert(person.clone());
                         }
-                        let done = scanned_count >= total;
+                        let done = current_count >= total;
                         let event = ScanProgressEvent {
-                            scanned: scanned_count,
+                            scanned: current_count,
                             image: Some(info),
                             done,
                             cancelled: false,
@@ -108,9 +106,9 @@ pub async fn scan_images(
                     }
                     Err(e) => {
                         log::warn!("处理图片失败: {}", e);
-                        let done = scanned_count >= total;
+                        let done = current_count >= total;
                         let event = ScanProgressEvent {
-                            scanned: scanned_count,
+                            scanned: current_count,
                             image: None,
                             done,
                             cancelled: false,
@@ -119,11 +117,23 @@ pub async fn scan_images(
                         let _ = app_handle.emit("scan-progress", &event);
                     }
                 }
-            }
-        }
+            });
+        });
 
-        // 如果 files 为空，也发送完成事件
-        if total == 0 {
+        // 检查是否是被取消的
+        let final_count = scanned_count.load(Ordering::SeqCst);
+        if cancel_flag.load(Ordering::Relaxed) {
+            log::info!("扫描被用户取消，已处理 {} 张", final_count);
+            let event = ScanProgressEvent {
+                scanned: final_count,
+                image: None,
+                done: true,
+                cancelled: true,
+                error: None,
+            };
+            let _ = app_handle.emit("scan-progress", &event);
+        } else if total == 0 {
+            // 如果 files 为空，也发送完成事件
             let event = ScanProgressEvent {
                 scanned: 0,
                 image: None,
@@ -137,14 +147,14 @@ pub async fn scan_images(
         let mut person_names: Vec<String> = person_buckets.into_iter().collect();
         person_names.sort();
 
-        ScanStats {
-            total_images: scanned_count,
+        Ok(ScanStats {
+            total_images: final_count,
             person_count: person_names.len(),
             person_names,
-        }
+        })
     })
     .await
-    .map_err(|e| format!("扫描任务失败: {}", e))?;
+    .map_err(|e| format!("扫描任务失败: {}", e))??;
 
     // 重置扫描状态
     let state = app.state::<AppState>();
