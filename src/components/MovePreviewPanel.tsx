@@ -1,5 +1,7 @@
 interface MovePreviewGroup {
   person: string;
+  folderPath: string;
+  directMove: boolean;
   count: number;
   items: {
     id: string;
@@ -12,7 +14,7 @@ interface MovePreviewPanelProps {
   targetDir: string;
   selectedCount: number;
   validCount: number;
-  unassignedCount: number;
+  directMoveCount: number;
   groups: MovePreviewGroup[];
   onClose: () => void;
 }
@@ -21,7 +23,7 @@ export function MovePreviewPanel({
   targetDir,
   selectedCount,
   validCount,
-  unassignedCount,
+  directMoveCount,
   groups,
   onClose,
 }: MovePreviewPanelProps) {
@@ -42,7 +44,7 @@ export function MovePreviewPanel({
       >
         <span className="text-xs" style={{ color: "var(--text-secondary)" }}>
           移动预览：{validCount} / {selectedCount} 张可移动
-          {unassignedCount > 0 ? `（${unassignedCount} 张未设置人物）` : ""}
+          {directMoveCount > 0 ? `（${directMoveCount} 张将直接移动到目标文件夹）` : ""}
         </span>
         <button
           type="button"
@@ -69,10 +71,9 @@ export function MovePreviewPanel({
         ) : (
           <div className="flex flex-col gap-4">
             {groups.map((group) => {
-              const folderPath = `${targetDir}\\${group.person}`;
               return (
                 <div
-                  key={group.person}
+                  key={group.folderPath}
                   style={{
                     background: "var(--bg-subtle)",
                     border: "1px solid var(--stroke-divider)",
@@ -84,10 +85,15 @@ export function MovePreviewPanel({
                     <code
                       className="text-xs truncate"
                       style={{ color: "var(--accent-text)" }}
-                      title={folderPath}
+                      title={group.folderPath}
                     >
-                      {folderPath}
+                      {group.folderPath}
                     </code>
+                    {group.directMove && (
+                      <span className="text-[11px] shrink-0 px-2 py-0.5 rounded-full" style={{ color: "var(--text-secondary)", background: "rgba(255,255,255,0.06)" }}>
+                        直接移动
+                      </span>
+                    )}
                     <span className="text-xs shrink-0" style={{ color: "var(--text-secondary)" }}>
                       {group.count} 张
                     </span>
@@ -96,7 +102,7 @@ export function MovePreviewPanel({
                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
                     {group.items.slice(0, 15).map((item) => (
                       <div
-                        key={`${group.person}-${item.id}`}
+                        key={`${group.folderPath}-${item.id}`}
                         style={{
                           background: "var(--bg-control)",
                           border: "1px solid var(--stroke-control)",

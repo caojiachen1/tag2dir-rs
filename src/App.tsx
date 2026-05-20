@@ -180,12 +180,10 @@ function App() {
       return;
     }
 
-    const toMove = images.filter(
-      (img) => selectedIds.has(img.id) && img.selected_person
-    );
+    const toMove = images.filter((img) => selectedIds.has(img.id));
 
     if (toMove.length === 0) {
-      setStatusMessage("没有可移动的图片（请确保已选择图片并设置人物）");
+      setStatusMessage("没有可移动的图片");
       return;
     }
 
@@ -197,7 +195,7 @@ function App() {
       const requests: MoveImageRequest[] = toMove.map((img) => ({
         path: img.path,
         filename: img.filename,
-        person: img.selected_person!,
+        person: img.selected_person ?? "",
       }));
 
       const result = await invoke<MoveResult>("move_images", {
@@ -258,11 +256,18 @@ function App() {
       string,
       { id: string; filename: string; thumbnail: string }[]
     >();
-    let unassignedCount = 0;
+    let directMoveCount = 0;
 
     selectedImages.forEach((img) => {
       if (!img.selected_person) {
-        unassignedCount += 1;
+        directMoveCount += 1;
+        const items = groups.get("") ?? [];
+        items.push({
+          id: img.id,
+          filename: img.filename,
+          thumbnail: img.thumbnail,
+        });
+        groups.set("", items);
         return;
       }
       const items = groups.get(img.selected_person) ?? [];
@@ -277,6 +282,8 @@ function App() {
     const groupList = Array.from(groups.entries())
       .map(([person, items]) => ({
         person,
+        folderPath: person ? `${targetDir}\${person}` : targetDir,
+        directMove: person === "",
         count: items.length,
         items,
       }))
@@ -284,11 +291,11 @@ function App() {
 
     return {
       selectedCount: selectedImages.length,
-      validCount: selectedImages.length - unassignedCount,
-      unassignedCount,
+      validCount: selectedImages.length,
+      directMoveCount,
       groups: groupList,
     };
-  }, [images, selectedIds]);
+  }, [images, selectedIds, targetDir]);
 
   const togglePreviewPanel = useCallback(() => {
     setPreviewOpen((prev) => !prev);
@@ -378,7 +385,7 @@ function App() {
           targetDir={targetDir}
           selectedCount={movePreview.selectedCount}
           validCount={movePreview.validCount}
-          unassignedCount={movePreview.unassignedCount}
+          directMoveCount={movePreview.directMoveCount}
           groups={movePreview.groups}
           onClose={togglePreviewPanel}
         />

@@ -7,7 +7,8 @@ use std::path::{Path, PathBuf};
 
 use crate::models::{MoveRecord, OperationLog};
 
-/// 将图片移动到目标文件夹中对应人物的子文件夹
+/// 将图片移动到目标文件夹中对应人物的子文件夹；
+/// 如果人物为空，则直接移动到目标文件夹。
 /// 返回操作日志用于撤销
 pub fn move_images(
     images: &[(String, String, String)], // (path, filename, selected_person)
@@ -31,17 +32,21 @@ pub fn move_images(
             continue;
         }
 
-        // 获取或创建人物文件夹
-        let person_dir = person_dirs
-            .entry(person.clone())
-            .or_insert_with(|| {
-                let dir = target_path.join(person);
-                if !dir.exists() {
-                    let _ = fs::create_dir_all(&dir);
-                }
-                dir
-            })
-            .clone();
+        // 获取或创建目标目录：有标签则进入人物子文件夹，无标签则直接进目标文件夹
+        let person_dir = if person.is_empty() {
+            target_path.to_path_buf()
+        } else {
+            person_dirs
+                .entry(person.clone())
+                .or_insert_with(|| {
+                    let dir = target_path.join(person);
+                    if !dir.exists() {
+                        let _ = fs::create_dir_all(&dir);
+                    }
+                    dir
+                })
+                .clone()
+        };
 
         // 处理文件名冲突
         let original_filename = source
