@@ -5,6 +5,7 @@ interface ControlBarProps {
   sourceDir: string;
   targetDir: string;
   includeSubdirs: boolean;
+  ignoreUnlabeledPeople: boolean;
   scanning: boolean;
   moving: boolean;
   hasUndo: boolean;
@@ -13,6 +14,7 @@ interface ControlBarProps {
   onSourceDirChange: (dir: string) => void;
   onTargetDirChange: (dir: string) => void;
   onIncludeSubdirsChange: (val: boolean) => void;
+  onIgnoreUnlabeledPeopleChange: (val: boolean) => void;
   onPickSourceDir: () => void;
   onPickTargetDir: () => void;
   onScan: () => void;
@@ -27,6 +29,7 @@ export function ControlBar({
   sourceDir,
   targetDir,
   includeSubdirs,
+  ignoreUnlabeledPeople,
   scanning,
   moving,
   hasUndo,
@@ -35,6 +38,7 @@ export function ControlBar({
   onSourceDirChange,
   onTargetDirChange,
   onIncludeSubdirsChange,
+  onIgnoreUnlabeledPeopleChange,
   onPickSourceDir,
   onPickTargetDir,
   onScan,
@@ -216,6 +220,20 @@ export function ControlBar({
             className="fluent-checkbox"
           />
           <span className="text-xs">包含子文件夹</span>
+        </label>
+
+        {/* 忽略无人物标签选项 */}
+        <label
+          className="flex items-center gap-2 select-none"
+          style={{ color: "var(--text-secondary)" }}
+        >
+          <input
+            type="checkbox"
+            checked={ignoreUnlabeledPeople}
+            onChange={(e) => onIgnoreUnlabeledPeopleChange(e.target.checked)}
+            className="fluent-checkbox"
+          />
+          <span className="text-xs">忽略无人物标签</span>
         </label>
 
         {/* 扫描进度提示 */}

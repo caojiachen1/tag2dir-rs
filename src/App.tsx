@@ -21,6 +21,7 @@ function App() {
   const [sourceDir, setSourceDir] = useState("");
   const [targetDir, setTargetDir] = useState("");
   const [includeSubdirs, setIncludeSubdirs] = useState(true);
+  const [ignoreUnlabeledPeople, setIgnoreUnlabeledPeople] = useState(true);
 
   // 图片数据
   const [images, setImages] = useState<ImageInfo[]>([]);
@@ -140,11 +141,13 @@ function App() {
         return new Set();
       }
       const allIds = new Set(
-        images.filter((img) => img.selected_person).map((img) => img.id)
+        images
+          .filter((img) => !ignoreUnlabeledPeople || img.selected_person)
+          .map((img) => img.id)
       );
       return allIds;
     });
-  }, [images]);
+  }, [images, ignoreUnlabeledPeople]);
 
   // 切换单个图片选中状态
   const toggleSelect = useCallback((id: string) => {
@@ -298,6 +301,7 @@ function App() {
         sourceDir={sourceDir}
         targetDir={targetDir}
         includeSubdirs={includeSubdirs}
+        ignoreUnlabeledPeople={ignoreUnlabeledPeople}
         scanning={scanning}
         moving={moving}
         hasUndo={hasUndo}
@@ -306,6 +310,7 @@ function App() {
         onSourceDirChange={setSourceDir}
         onTargetDirChange={setTargetDir}
         onIncludeSubdirsChange={setIncludeSubdirs}
+        onIgnoreUnlabeledPeopleChange={setIgnoreUnlabeledPeople}
         onPickSourceDir={pickSourceDir}
         onPickTargetDir={pickTargetDir}
         onScan={startScan}
