@@ -30,20 +30,20 @@
     </filter>
   </defs>
 
-  <rect x="0" y="0" width="512" height="512" rx="120" fill="url(#bg)"/>
+  <g transform="translate(256 256) scale(1.2) translate(-256 -256)">
+    <g filter="url(#shadow)">
+      <path d="M110 148c0-17 13-30 30-30h84l30 30h148c17 0 30 13 30 30v176c0 17-13 30-30 30H140c-17 0-30-13-30-30V148z" fill="url(#folderBack)"/>
+      <path d="M92 204c0-18 14-32 32-32h256c18 0 32 14 32 32v138c0 18-14 32-32 32H124c-18 0-32-14-32-32V204z" fill="url(#folderFront)" filter="url(#shadowStrong)"/>
+    </g>
 
-  <g filter="url(#shadow)">
-    <path d="M110 148c0-17 13-30 30-30h84l30 30h148c17 0 30 13 30 30v176c0 17-13 30-30 30H140c-17 0-30-13-30-30V148z" fill="url(#folderBack)"/>
-    <path d="M92 204c0-18 14-32 32-32h256c18 0 32 14 32 32v138c0 18-14 32-32 32H124c-18 0-32-14-32-32V204z" fill="url(#folderFront)" filter="url(#shadowStrong)"/>
-  </g>
+    <g transform="translate(116 62) rotate(-14 88 120)" filter="url(#shadow)">
+      <path d="M64 28l56 56v170H8V84l56-56z" fill="url(#tagPink)"/>
+      <circle cx="64" cy="88" r="13" fill="#5b1730"/>
+    </g>
 
-  <g transform="translate(116 62) rotate(-14 88 120)" filter="url(#shadow)">
-    <path d="M64 28l56 56v170H8V84l56-56z" fill="url(#tagPink)"/>
-    <circle cx="64" cy="88" r="13" fill="#5b1730"/>
-  </g>
-
-  <g transform="translate(230 42) rotate(10 88 128)" filter="url(#shadow)">
-    <path d="M64 28l56 56v182H8V84l56-56z" fill="url(#tagBlue)"/>
-    <circle cx="64" cy="88" r="13" fill="#173166"/>
+    <g transform="translate(230 42) rotate(10 88 128)" filter="url(#shadow)">
+      <path d="M64 28l56 56v182H8V84l56-56z" fill="url(#tagBlue)"/>
+      <circle cx="64" cy="88" r="13" fill="#173166"/>
+    </g>
   </g>
 </svg>
