@@ -282,7 +282,7 @@ function App() {
     const groupList = Array.from(groups.entries())
       .map(([person, items]) => ({
         person,
-        folderPath: person ? `${targetDir}\${person}` : targetDir,
+        folderPath: person ? `${targetDir}\\${person}` : targetDir,
         directMove: person === "",
         count: items.length,
         items,
