@@ -3,8 +3,11 @@
 
 use std::path::{Path, PathBuf};
 
+use std::fs::File;
+use std::io::BufReader;
+
 use base64::Engine;
-use image::GenericImageView;
+use image::{GenericImageView, ImageReader};
 use walkdir::WalkDir;
 
 use crate::metadata;
@@ -61,7 +64,13 @@ pub fn process_single_image(path: &Path) -> Result<ImageInfo, String> {
     let (persons, keywords) = metadata::extract_person_tags(path);
 
     // 生成缩略图
-    let thumbnail = generate_thumbnail(path).unwrap_or_default();
+    let thumbnail = match generate_thumbnail(path) {
+        Ok(t) => t,
+        Err(e) => {
+            log::warn!("缩略图生成失败 ({}): {}", path.display(), e);
+            String::new()
+        }
+    };
 
     // 只要有人物标签，就默认选择第一个（多人物时也选第一个，用户可在前端修改）
     let selected_person = if !persons.is_empty() {
@@ -84,7 +93,14 @@ pub fn process_single_image(path: &Path) -> Result<ImageInfo, String> {
 
 /// 生成图片缩略图，返回 base64 编码的 JPEG 数据
 fn generate_thumbnail(path: &Path) -> Result<String, String> {
-    let img = image::open(path).map_err(|e| format!("无法打开图片: {}", e))?;
+    // 读取文件头检测真实格式，不依赖扩展名
+    let file = File::open(path).map_err(|e| format!("无法打开文件: {}", e))?;
+    let reader = ImageReader::new(BufReader::new(file))
+        .with_guessed_format()
+        .map_err(|e| format!("无法检测图片格式: {}", e))?;
+    let img = reader
+        .decode()
+        .map_err(|e| format!("无法解码图片: {}", e))?;
 
     let (w, h) = img.dimensions();
 
@@ -105,10 +121,13 @@ fn generate_thumbnail(path: &Path) -> Result<String, String> {
     // 使用 Lanczos3 滤波器获得较好的缩放质量
     let thumbnail = img.resize(new_w, new_h, image::imageops::FilterType::Lanczos3);
 
+    // 转为 RGB（PNG 可能带透明通道，JPEG 不支持，需先转换）
+    let rgb_thumbnail = thumbnail.to_rgb8();
+
     // 编码为 JPEG
     let mut buf = Vec::new();
     let mut cursor = std::io::Cursor::new(&mut buf);
-    thumbnail
+    rgb_thumbnail
         .write_to(&mut cursor, image::ImageFormat::Jpeg)
         .map_err(|e| format!("缩略图编码失败: {}", e))?;
 
